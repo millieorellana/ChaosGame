@@ -10,6 +10,15 @@
 using namespace sf;
 using namespace std;
 
+Color blendColors(const Color& color1, const Color& color2)
+{
+    return Color(
+        (color1.r + color2.r) / 2,
+        (color1.g + color2.g) / 2,
+        (color1.b + color2.b) / 2
+    );
+}
+
 int main()
 {
     // Create a video mode object
@@ -18,7 +27,8 @@ int main()
     RenderWindow window(vm, "Chaos Game!!", Style::Default);
     
     vector<Vector2f> vertices;
-    vector<Vector2f> points;
+    vector<Color> vertexColors; //Store colors for each vertex
+    vector<pair<Vector2f, Color>> points; // Store points with their respective colors
 
     // Load the font for text
     Font font;
@@ -63,11 +73,13 @@ int main()
                     if (vertices.size() < 3)
                     {
                         vertices.push_back(Vector2f(event.mouseButton.x, event.mouseButton.y));
+                        vertexColors.push_back(Color(rand() % 256, rand() % 256, rand() % 256));
+
                     }
                     else if (vertices.size() == 3 && points.size() == 0)
                     {
                         // Storing  4th click as the starting point
-                        points.push_back(Vector2f(event.mouseButton.x, event.mouseButton.y));
+                        points.push_back({Vector2f(event.mouseButton.x, event.mouseButton.y), Color::White});
                     }
                 }
             }
@@ -87,15 +99,18 @@ int main()
         if (points.size() > 0)
         {
             // generate more points for the chaos game algorithm
-            Vector2f lastPoint = points.back();
+            Vector2f lastPoint = points.back().first;
+            Color lastColor = points.back().second;
 	    //select random vertex
             int randomVertexIndex = rand() % 3;  
             Vector2f randomVertex = vertices[randomVertexIndex];
+            Color randomVertexColor = vertexColors[randomVertexIndex];
             
             // calculate midpoint between random vertex and last point
             Vector2f newPoint = (lastPoint + randomVertex) / 2.f;
+            Color newColor = blendColors(lastColor, randomVertexColor);
 	    //push back the newly generated coord.
-            points.push_back(newPoint);
+            points.push_back({newPoint, newColor});
         }
 
         /*
@@ -110,7 +125,7 @@ int main()
         {
             RectangleShape rect(Vector2f(10, 10));
             rect.setPosition(vertices[i]);
-            rect.setFillColor(Color::Blue);
+            rect.setFillColor(vertexColors[i]);
             window.draw(rect);
         }
 
@@ -118,8 +133,8 @@ int main()
         for (size_t i = 0; i < points.size(); ++i)
         {
             RectangleShape pointShape(Vector2f(2, 2));  // Smaller red dots
-            pointShape.setPosition(points[i]);
-            pointShape.setFillColor(Color::Red);
+            pointShape.setPosition(points[i].first);
+            pointShape.setFillColor(points[i].second);
             window.draw(pointShape);
         }
 
